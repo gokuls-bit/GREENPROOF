@@ -1,8 +1,11 @@
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import routes_emissions, routes_marketplace, routes_ai, routes_trading, routes_auth
 import time
+import asyncio
+import json
+import random
 
 app = FastAPI(title="GreenProof Backend")
 
@@ -73,3 +76,22 @@ async def get_transactions():
 async def health_check():
 	"""Simple health check endpoint for monitoring"""
 	return {"status": "ok", "message": "GreenProof backend is running"}
+
+# Real-Time WebSocket Connection
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            await asyncio.sleep(2.5)  # Push every 2.5s
+            
+            # Simulate dynamic real-time data adjustments pushed directly to dashboard
+            live_data = {
+                "type": "DASHBOARD_LIVE_STREAM",
+                "vol_increment": round(random.uniform(5.0, 50.0), 2),
+                "emission_fluctuation": round(random.uniform(-0.5, 0.5), 2),
+                "ai_pulse_active": True
+            }
+            await websocket.send_text(json.dumps(live_data))
+    except WebSocketDisconnect:
+        print("Frontend Client Disconnected")
